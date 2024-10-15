@@ -2,8 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from bayesian_network import *
 
+
 class Grid:
+
     def __init__(self, grid_size, gems):
+        
         self.grid_size = grid_size
         self.gems = gems
         self.network = BayesianNetwork(self.grid_size, len(self.gems))

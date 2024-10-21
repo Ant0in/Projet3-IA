@@ -8,7 +8,8 @@ def distance(cell: list[int, int], gem_position: list[int, int]) -> float:
     # Calculate Euclidean distance between the current cell and the gem position.
     assert len(cell) == len(gem_position) == 2, f'[E] Cell and gem_position must be in 2dimensions.'
     distance: float = math.sqrt(((gem_position[0] - cell[0]) ** 2) + ((gem_position[1] - cell[1]) ** 2))
-    noise: float = np.random.normal(0, 0.1)
+    sigma: float = 0.5
+    noise: float = np.random.normal(0, sigma)
     return distance + noise
 
 
@@ -62,6 +63,7 @@ class BayesianNetwork:
             # Pour chacune des gemmes, on met à jour le tableau de la vraisemblance 
             for gc in gem_positions:
                 posterior[gc[0]][gc[1]] += likelihood
+
 
         posterior *= self.get_belief_distribution()
         self.G = posterior

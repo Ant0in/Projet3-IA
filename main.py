@@ -1,6 +1,6 @@
 
 
-from grid import *
+from src.grid import *
 import random
 
 

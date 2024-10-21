@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from bayesian_network import *
+from src.bayesian_network import *
 
 
 class Grid:

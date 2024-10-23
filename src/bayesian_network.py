@@ -4,13 +4,12 @@ import math
 
 
 
-def distance(cell: list[int, int], gem_position: list[int, int]) -> float:
+def distance(cell: list[int, int], gem_position: list[int, int], noise: bool = True) -> float:
     # Calculate Euclidean distance between the current cell and the gem position.
     assert len(cell) == len(gem_position) == 2, f'[E] Cell and gem_position must be in 2dimensions.'
     distance: float = math.sqrt(((gem_position[0] - cell[0]) ** 2) + ((gem_position[1] - cell[1]) ** 2))
-    sigma: float = 0.5
-    noise: float = np.random.normal(0, sigma)
-    return distance + noise
+    noise: float = np.random.normal(0, 0.5)
+    return (distance + noise) if noise else distance
 
 
 # à chaque fois, on reçoit les distances du sonar vers les gemmes (position exacte, le sonar sent ou elles sont).
@@ -31,9 +30,11 @@ class BayesianNetwork:
     def __init__(self, grid_size: int, n_gems: int) -> None:
         
         self.grid_size: int = grid_size
+        self.every_coordinates: list[list[int, int]] = [(x, y) for x in range(self.grid_size) for y in range(self.grid_size)]
         self.n_gems: int = n_gems
         self.G: np.ndarray = np.ones((self.grid_size, self.grid_size)) / self.grid_size ** 2
-    
+        
+
     def likelihood(self, current_cell: list[int, int], distances: list[float], gem_positions: list[list[int, int]]) -> float:
         # Compute likelihood of observing given distances, given gem positions.
         likelihood: float = 1.0
@@ -53,10 +54,9 @@ class BayesianNetwork:
 
         # Init la matrice de croyance des positions ainsi que la liste des positions possibles dans la matrice.
         posterior: np.ndarray = np.zeros((self.grid_size, self.grid_size))
-        all_positions: list[list[int, int]] = [[x, y] for x in range(self.grid_size) for y in range(self.grid_size)]
 
         # Pour chacune des config possibles des n gemmes;
-        for gem_positions in itertools.permutations(all_positions, self.n_gems):
+        for gem_positions in itertools.permutations(self.every_coordinates, self.n_gems):
     
             likelihood: float = self.likelihood(current_cell=cell, distances=distances, gem_positions=gem_positions)
             
@@ -64,16 +64,18 @@ class BayesianNetwork:
             for gc in gem_positions:
                 posterior[gc[0]][gc[1]] += likelihood
 
-
-        posterior *= self.get_belief_distribution()
-        self.G = posterior
+        self.G *= posterior
 
         
-    
     def get_belief_distribution(self) -> np.ndarray:
         # Return current belief distribution (posterior).
-        G_sum: float = self.G.sum()
-        if G_sum > 0: self.G /= G_sum
+        self.normalize(mat=self.G)
         return self.G
+    
+    @staticmethod
+    def normalize(mat: np.ndarray) -> None:
+        # normalise matrix 'mat' in place
+        mat_sum: float = mat.sum()
+        if mat_sum > 0: mat /= mat_sum
 
 

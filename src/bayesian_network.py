@@ -8,21 +8,8 @@ def distance(cell: list[int, int], gem_position: list[int, int], noise: bool = T
     # Calculate Euclidean distance between the current cell and the gem position.
     assert len(cell) == len(gem_position) == 2, f'[E] Cell and gem_position must be in 2dimensions.'
     distance: float = math.sqrt(((gem_position[0] - cell[0]) ** 2) + ((gem_position[1] - cell[1]) ** 2))
-    noise: float = np.random.normal(0, 0.5)
-    return (distance + noise) if noise else distance
+    return (distance + np.random.normal(0, 0.5)) if noise else distance
 
-
-# à chaque fois, on reçoit les distances du sonar vers les gemmes (position exacte, le sonar sent ou elles sont).
-# 1. On génère toutes les permutations des positions de n gemmes possibles, et on va estimer à quel point c'est probable que
-# ça soit ça, compte tenu de nos observations.
-# 2. Pour chacune de ces possibilités, on vérifie la valeur de d, l'écart entre la distance mesurée via le sonar pour la vraie position
-# et la distance mesurée via le sonar pour la position qu'on teste. Si on est très proche, alors d très petit.
-# 3. Puisqu'on a une fonction 2^-d, plus d est petit (bon guess), plus likelyhood auguemente.
-# 4. On veut mettre à jour nos croyances stockées dans la matrice dans BayesNetwork.G. Pour ce-faire, on va initialiser
-# une matrice de zéros, à laquelle on va ajouter les vraisemblances pour chacune des positions possibles des gemmes. On se retrouve
-# avec une carte indiquant les probabilités que les gemmes se trouvent en i, j. On additionne cette matrice à la matrice de croyances.
-# 5. On obtient alors la matrice avec des zones "chaudes" là ou les vraisamblances sont souvent correctes et des zones froides
-# là ou elles sont très mauvaises.
 
 
 class BayesianNetwork:
@@ -36,16 +23,17 @@ class BayesianNetwork:
         
 
     def likelihood(self, current_cell: list[int, int], distances: list[float], gem_positions: list[list[int, int]]) -> float:
+        
         # Compute likelihood of observing given distances, given gem positions.
         likelihood: float = 1.0
-        for i, gem_position in enumerate(gem_positions):
-            
-            # gem_positions contient les noeuds G(m) des positions que peuvent prendre les gemmes.
-            # On calcule les vecteurs observation vers ces G(m) afin de mettre à jour nos croyances.
-            inf_distance: float = distance(current_cell, gem_position)
-            sonar_distance: float = distances[i]
-            d: float = abs(inf_distance - sonar_distance)  # Distance entre l'observation et la croyance.
-            likelihood *= (2 ** (-d))
+        BASE: float = 2.0
+        # gem_positions contient les noeuds G(m) des positions que peuvent prendre les gemmes.
+        # On calcule les vecteurs observation vers ces G(m) afin de mettre à jour nos croyances.
+        observation: list[float] = sorted([distance(current_cell, gp) for gp in gem_positions])
+
+        for i, ob in enumerate(observation):
+            d: float = abs(ob - distances[i])  # Distance entre l'observation et la croyance.
+            likelihood *= (BASE ** (-d))
 
         return likelihood
     
@@ -55,8 +43,10 @@ class BayesianNetwork:
         # Init la matrice de croyance des positions ainsi que la liste des positions possibles dans la matrice.
         posterior: np.ndarray = np.zeros((self.grid_size, self.grid_size))
 
+        distances.sort()  # On sort les distances pour se permettre d'utiliser les combi au lieu des perms
+
         # Pour chacune des config possibles des n gemmes;
-        for gem_positions in itertools.permutations(self.every_coordinates, self.n_gems):
+        for gem_positions in itertools.combinations(self.every_coordinates, self.n_gems):
     
             likelihood: float = self.likelihood(current_cell=cell, distances=distances, gem_positions=gem_positions)
             
@@ -64,12 +54,13 @@ class BayesianNetwork:
             for gc in gem_positions:
                 posterior[gc[0]][gc[1]] += likelihood
 
+        self.normalize(mat=posterior)
         self.G *= posterior
 
         
-    def get_belief_distribution(self) -> np.ndarray:
+    def get_belief_distribution(self, move: str | None = None) -> np.ndarray:
         # Return current belief distribution (posterior).
-        self.normalize(mat=self.G)
+        if move: print(f'[i] Done processing move : {move}.')
         return self.G
     
     @staticmethod

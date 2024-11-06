@@ -19,9 +19,8 @@ class BayesianNetwork:
         self.grid_size: int = grid_size
         self.every_coordinates: list[list[int, int]] = [(x, y) for x in range(self.grid_size) for y in range(self.grid_size)]
         self.n_gems: int = n_gems
-        self.G: np.ndarray = np.ones((self.grid_size, self.grid_size)) / self.grid_size ** 2
+        self.G: np.ndarray = np.zeros((self.grid_size, self.grid_size))
         
-
     def likelihood(self, current_cell: list[int, int], distances: list[float], gem_positions: list[list[int, int]]) -> float:
         
         # Compute likelihood of observing given distances, given gem positions.
@@ -54,19 +53,17 @@ class BayesianNetwork:
             for gc in gem_positions:
                 posterior[gc[0]][gc[1]] += likelihood
 
-        self.normalize(mat=posterior)
-        self.G *= posterior
+        self.G += self.normalize(posterior)
 
         
     def get_belief_distribution(self, move: str | None = None) -> np.ndarray:
         # Return current belief distribution (posterior).
         if move: print(f'[i] Done processing move : {move}.')
-        return self.G
+        return self.normalize(mat=self.G)
     
     @staticmethod
-    def normalize(mat: np.ndarray) -> None:
-        # normalise matrix 'mat' in place
+    def normalize(mat: np.ndarray) -> np.ndarray:
+
         mat_sum: float = mat.sum()
-        if mat_sum > 0: mat /= mat_sum
-
-
+        if mat_sum > 0: return mat / mat_sum
+        else: return mat

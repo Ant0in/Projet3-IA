@@ -15,10 +15,14 @@ class Grid:
 
     def move(self, direction):
         """Updates the agent position, and performs the inference in the Bayesian network"""
-        if direction == "L": self.current_position[1] -= 1
-        elif direction == "R": self.current_position[1] += 1
-        elif direction == "U": self.current_position[0] -= 1
-        elif direction == "D": self.current_position[0] += 1
+        if direction == "L":
+            self.current_position[1] -= 1
+        elif direction == "R":
+            self.current_position[1] += 1
+        elif direction == "U":
+            self.current_position[0] -= 1
+        elif direction == "D":
+            self.current_position[0] += 1
         self.network.infer(self.current_position, [distance(self.current_position, i) for i in self.gems])
     
     def plot(self):

@@ -67,9 +67,7 @@ P(n^2, m) = \frac{(n^2)!}{(n^2 - m)!}
 
 \vspace{1em}
 
-\noindent Pour chacune de ces permutations, nous souhaitons évaluer à quel point il est vraisemblable que ces \( m \) positions soient les positions de nos gemmes. Nous faisons alors appel à la fonction de vraisemblance énoncée plus tôt. Nous allons dès lors ajouter cette vraisemblance aux \( m \) positions \( x, y \) dans une matrice \textit{posterior}. De ce fait, les permutations vraisemblables feront augmenter les cases probables, et les cases peu probables resteront proches de 0.
-
-\noindent Nous combinerons finalement cette matrice \textit{posterior} avec notre matrice de croyances. Ainsi, au fur et à mesure des itérations, notre réseau de Bayes deviendra de plus en plus certain des positions des gemmes. En effet, chaque changement de positions générera de nouveaux vecteurs d'observations, qui viendront renforcer et corroborer les croyances préexistantes.
+\noindent Pour chacune de ces permutations, nous souhaitons évaluer à quel point il est vraisemblable que ces \( m \) positions soient les positions de nos gemmes. Nous faisons alors appel à la fonction de vraisemblance énoncée plus tôt. Nous allons dès lors ajouter cette vraisemblance aux \( m \) positions \( x, y \) dans une matrice \textit{posterior}. De ce fait, les permutations vraisemblables feront augmenter les cases probables, et les cases peu probables resteront proches de 0. Nous combinerons finalement cette matrice \textit{posterior} avec notre matrice de croyances. Ainsi, au fur et à mesure des itérations, notre réseau de Bayes deviendra de plus en plus certain des positions des gemmes. En effet, chaque changement de positions générera de nouveaux vecteurs d'observations, qui viendront renforcer et corroborer les croyances préexistantes.
 
 \subsubsection{Complexité}\label{subsec:complex}
 
@@ -149,7 +147,12 @@ Ainsi, cette approche permet de réduire le nombre total de comparaisons à effe
 
 \vspace{1em}
 
-\noindent Nous introduisons ainsi \( \varepsilon \), le seuil en dessous duquel les cases seront rejetées. En supposant que \( k \) cases soient invraisemblables, c'est-à-dire que \( \textbf{likelyhood}(k) \leq \varepsilon \), nous obtenons alors \( n^2 - k \) positions possibles. En termes de combinaisons, cela se traduit par :
+\noindent Nous introduisons ainsi \( \varepsilon \), le seuil en dessous duquel les cases seront rejetées. Nous définissons ainsi l'ensemble des cases invraisemblables \( I \) tel que :
+\[
+I := \left\{ c_{i,j} \;|\; \text{likelyhood}(c_{i,j}) \leq \varepsilon, \; 0 \leq i, j \leq n-1 \right\}
+\]
+
+\noindent En termes de combinaisons, en supposant que \( |I| = k \), cela se traduit par :
 \[
 \binom{n^2 - k}{m} = \frac{(n^2 - k)!}{(n^2 - k - m)! \cdot m!}
 \]

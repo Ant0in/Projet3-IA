@@ -1,3 +1,4 @@
+
 import numpy as np
 import itertools
 import math
@@ -5,11 +6,10 @@ import math
 
 
 def distance(cell: list[int, int], gem_position: list[int, int], noise: bool = True) -> float:
-    # Calculate Euclidean distance between the current cell and the gem position.
+    # Calcule la distance euclidienne entre la position d'une gemme et la position current, en ajoutant un bruit suivant une normale N(0, 0.5).
     assert len(cell) == len(gem_position) == 2, f'[E] Cell and gem_position must be in 2dimensions.'
     distance: float = math.sqrt(((gem_position[0] - cell[0]) ** 2) + ((gem_position[1] - cell[1]) ** 2))
     return (distance + np.random.normal(0, 0.5)) if noise else distance
-
 
 
 class BayesianNetwork:
@@ -23,26 +23,26 @@ class BayesianNetwork:
         
     def likelihood(self, current_cell: list[int, int], distances: list[float], gem_positions: list[list[int, int]]) -> float:
         
-        # Compute likelihood of observing given distances, given gem positions.
+        # Évalue la vraisemblance qu'un vecteur d'observations "distances" représente les distances réelles
+        # de current_cell à chaqune des gemmes dans gem_positions.
+        
         likelihood: float = 1.0
         BASE: float = 2.0
-        # gem_positions contient les noeuds G(m) des positions que peuvent prendre les gemmes.
-        # On calcule les vecteurs observation vers ces G(m) afin de mettre à jour nos croyances.
+        # On calcule le vecteur observations vers ces gemmes potentielles.
         observation: list[float] = sorted([distance(current_cell, gp) for gp in gem_positions])
 
         for i, ob in enumerate(observation):
-            d: float = abs(ob - distances[i])  # Distance entre l'observation et la croyance.
-            likelihood *= (BASE ** (-d))
+            d: float = abs(ob - distances[i])  # Distance entre l'observation et la position potentielle.
+            likelihood *= (BASE ** (-d))  # using 2^-d
 
         return likelihood
     
     def infer(self, cell: list[int, int], distances: list[float]) -> None:
-        # Update beliefs using inference by enumeration over all possible gem positions.
 
-        # Init la matrice de croyance des positions ainsi que la liste des positions possibles dans la matrice.
+        # Init la matrice de croyance des positions.
         posterior: np.ndarray = np.zeros((self.grid_size, self.grid_size))
 
-        distances.sort()  # On sort les distances pour se permettre d'utiliser les combi au lieu des perms
+        distances.sort()  # On sort les distances pour se permettre d'utiliser les combi au lieu des perms (voir rapport 4.2)
 
         # Pour chacune des config possibles des n gemmes;
         for gem_positions in itertools.combinations(self.every_coordinates, self.n_gems):
@@ -54,8 +54,7 @@ class BayesianNetwork:
                 posterior[gc[0]][gc[1]] += likelihood
 
         self.G += self.normalize(posterior)
-
-        
+  
     def get_belief_distribution(self, move: str | None = None) -> np.ndarray:
         # Return current belief distribution (posterior).
         if move: print(f'[i] Done processing move : {move}.')
@@ -63,7 +62,8 @@ class BayesianNetwork:
     
     @staticmethod
     def normalize(mat: np.ndarray) -> np.ndarray:
-
+        # pas in-place.
         mat_sum: float = mat.sum()
         if mat_sum > 0: return mat / mat_sum
         else: return mat
+

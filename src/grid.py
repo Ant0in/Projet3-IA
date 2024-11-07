@@ -1,6 +1,8 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 from src.bayesian_network import *
+
 
 
 class Grid:
@@ -45,3 +47,4 @@ class Grid:
             ax[m].imshow(self.network.get_belief_distribution().T)
         plt.tight_layout()
         plt.show()
+
